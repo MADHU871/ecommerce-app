@@ -49,10 +49,23 @@ pipeline {
 
             steps {
 
-                sh '''
-                docker login -u mad0008271 -p YOUR_DOCKER_PASSWORD
-                '''
+                withCredentials([usernamePassword(
 
+                    credentialsId: 'dockerhub',
+
+                    usernameVariable: 'DOCKER_USER',
+
+                    passwordVariable: 'DOCKER_PASS'
+
+                )]) {
+
+                    sh '''
+                    echo $DOCKER_PASS | docker login \
+                    -u $DOCKER_USER \
+                    --password-stdin
+                    '''
+
+                }
             }
         }
 
@@ -84,6 +97,7 @@ pipeline {
 
                 sh '''
                 docker stop $CONTAINER_NAME || true
+
                 docker rm $CONTAINER_NAME || true
                 '''
 
@@ -136,6 +150,7 @@ pipeline {
 
                 sh '''
                 docker ps -a
+
                 docker images
                 '''
 
@@ -146,7 +161,7 @@ pipeline {
 
             steps {
 
-                echo 'Cloudflare deployment triggered'
+                echo 'Cloudflare deployment triggered automatically'
 
             }
         }
@@ -193,7 +208,7 @@ pipeline {
 
             steps {
 
-                echo 'Full CI/CD Pipeline Completed'
+                echo 'Full CI/CD DevOps Pipeline Completed Successfully'
 
             }
         }
@@ -209,7 +224,7 @@ pipeline {
 
         failure {
 
-            echo 'Pipeline failed'
+            echo 'Pipeline failed. Check logs.'
 
         }
     }
