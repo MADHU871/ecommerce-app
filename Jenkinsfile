@@ -7,6 +7,9 @@ pipeline {
         IMAGE_NAME = "mad0008271/ecommerce-app"
         CONTAINER_NAME = "ecommerce-container"
 
+        AZURE_WEBAPP_NAME = "mad-ecommerce-app-2026"
+        AZURE_RESOURCE_GROUP = "ecommerce-group2"
+
     }
 
     stages {
@@ -35,7 +38,9 @@ pipeline {
 
             steps {
 
-                sh 'docker build -t $IMAGE_NAME .'
+                sh '''
+                docker build -t $IMAGE_NAME .
+                '''
 
             }
         }
@@ -54,7 +59,11 @@ pipeline {
 
                 )]) {
 
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh '''
+                    echo $DOCKER_PASS | docker login \
+                    -u $DOCKER_USER \
+                    --password-stdin
+                    '''
 
                 }
             }
@@ -64,7 +73,9 @@ pipeline {
 
             steps {
 
-                sh 'docker push $IMAGE_NAME'
+                sh '''
+                docker push $IMAGE_NAME
+                '''
 
             }
         }
@@ -73,7 +84,9 @@ pipeline {
 
             steps {
 
-                sh 'docker pull $IMAGE_NAME'
+                sh '''
+                docker pull $IMAGE_NAME
+                '''
 
             }
         }
@@ -84,6 +97,7 @@ pipeline {
 
                 sh '''
                 docker stop $CONTAINER_NAME || true
+
                 docker rm $CONTAINER_NAME || true
                 '''
 
@@ -108,7 +122,9 @@ pipeline {
 
             steps {
 
-                sh 'docker logs $CONTAINER_NAME'
+                sh '''
+                docker logs $CONTAINER_NAME
+                '''
 
             }
         }
@@ -134,6 +150,7 @@ pipeline {
 
                 sh '''
                 docker ps -a
+
                 docker images
                 '''
 
@@ -149,11 +166,49 @@ pipeline {
             }
         }
 
+        stage('Azure Login') {
+
+            steps {
+
+                sh '''
+                az login
+                '''
+
+            }
+        }
+
+        stage('Azure Deploy') {
+
+            steps {
+
+                sh '''
+                az webapp config container set \
+                --name $AZURE_WEBAPP_NAME \
+                --resource-group $AZURE_RESOURCE_GROUP \
+                --docker-custom-image-name $IMAGE_NAME
+                '''
+
+            }
+        }
+
+        stage('Azure Restart WebApp') {
+
+            steps {
+
+                sh '''
+                az webapp restart \
+                --name $AZURE_WEBAPP_NAME \
+                --resource-group $AZURE_RESOURCE_GROUP
+                '''
+
+            }
+        }
+
         stage('Automation Complete') {
 
             steps {
 
-                echo 'CI/CD Automation Pipeline Completed Successfully'
+                echo 'Full CI/CD DevOps Pipeline Completed Successfully'
 
             }
         }
@@ -169,7 +224,7 @@ pipeline {
 
         failure {
 
-            echo 'Pipeline failed. Check logs.'
+            echo 'Pipeline failed. Check Jenkins logs.'
 
         }
     }
