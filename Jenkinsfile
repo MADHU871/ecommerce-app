@@ -47,22 +47,12 @@ pipeline {
 
         stage('Docker Login') {
 
-    steps {
+            steps {
 
-        sh '''
-        docker login -u mad0008271 -p YOUR_DOCKER_PASSWORD
-        '''
+                sh '''
+                docker login -u mad0008271 -p YOUR_DOCKER_PASSWORD
+                '''
 
-    }
-}
-
-                    sh '''
-                    echo $DOCKER_PASS | docker login \
-                    -u $DOCKER_USER \
-                    --password-stdin
-                    '''
-
-                }
             }
         }
 
@@ -94,7 +84,6 @@ pipeline {
 
                 sh '''
                 docker stop $CONTAINER_NAME || true
-
                 docker rm $CONTAINER_NAME || true
                 '''
 
@@ -147,7 +136,6 @@ pipeline {
 
                 sh '''
                 docker ps -a
-
                 docker images
                 '''
 
@@ -158,7 +146,7 @@ pipeline {
 
             steps {
 
-                echo 'Cloudflare deployment triggered automatically from GitHub'
+                echo 'Cloudflare deployment triggered'
 
             }
         }
@@ -205,7 +193,7 @@ pipeline {
 
             steps {
 
-                echo 'Full CI/CD DevOps Pipeline Completed Successfully'
+                echo 'Full CI/CD Pipeline Completed'
 
             }
         }
@@ -221,7 +209,7 @@ pipeline {
 
         failure {
 
-            echo 'Pipeline failed. Check Jenkins logs.'
+            echo 'Pipeline failed'
 
         }
     }
