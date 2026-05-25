@@ -4,7 +4,8 @@ pipeline {
 
     environment {
 
-        IMAGE = "mad0008271/ecommerce-app"
+        IMAGE_NAME = "mad0008271/ecommerce-app"
+        CONTAINER_NAME = "ecommerce-container"
 
     }
 
@@ -13,14 +14,49 @@ pipeline {
         stage('Git Checkout') {
 
             steps {
-                git 'https://github.com/MADHU871/ecommerce-app.git'
+
+                git branch: 'main',
+                url: 'https://github.com/MADHU871/ecommerce-app.git'
+
+            }
+        }
+
+        stage('Check Files') {
+
+            steps {
+
+                sh 'pwd'
+                sh 'ls -la'
+
             }
         }
 
         stage('Docker Build') {
 
             steps {
-                sh 'docker build -t $IMAGE .'
+
+                sh 'docker build -t $IMAGE_NAME .'
+
+            }
+        }
+
+        stage('Docker Login') {
+
+            steps {
+
+                withCredentials([usernamePassword(
+
+                    credentialsId: 'dockerhub',
+
+                    usernameVariable: 'DOCKER_USER',
+
+                    passwordVariable: 'DOCKER_PASS'
+
+                )]) {
+
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
+                }
             }
         }
 
@@ -28,27 +64,113 @@ pipeline {
 
             steps {
 
-                withDockerRegistry([], 'dockerhub') {
+                sh 'docker push $IMAGE_NAME'
 
-                    sh 'docker push $IMAGE'
-                }
             }
         }
 
-        stage('Run Container') {
+        stage('Docker Pull') {
+
+            steps {
+
+                sh 'docker pull $IMAGE_NAME'
+
+            }
+        }
+
+        stage('Stop Old Container') {
 
             steps {
 
                 sh '''
-                docker stop ecommerce-container || true
-                docker rm ecommerce-container || true
-
-                docker run -d \
-                --name ecommerce-container \
-                -p 3000:3000 \
-                $IMAGE
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
                 '''
+
             }
+        }
+
+        stage('Docker Run') {
+
+            steps {
+
+                sh '''
+                docker run -d \
+                --name $CONTAINER_NAME \
+                -p 3007:3000 \
+                $IMAGE_NAME
+                '''
+
+            }
+        }
+
+        stage('Docker Logs') {
+
+            steps {
+
+                sh 'docker logs $CONTAINER_NAME'
+
+            }
+        }
+
+        stage('Docker Copy') {
+
+            steps {
+
+                sh '''
+                mkdir -p backup
+
+                docker cp \
+                $CONTAINER_NAME:/app/package.json \
+                backup/package.json || true
+                '''
+
+            }
+        }
+
+        stage('Docker Error Check') {
+
+            steps {
+
+                sh '''
+                docker ps -a
+                docker images
+                '''
+
+            }
+        }
+
+        stage('Cloudflare Trigger') {
+
+            steps {
+
+                echo 'Cloudflare deployment triggered automatically from GitHub'
+
+            }
+        }
+
+        stage('Automation Complete') {
+
+            steps {
+
+                echo 'CI/CD Automation Pipeline Completed Successfully'
+
+            }
+        }
+    }
+
+    post {
+
+        success {
+
+            echo 'Pipeline executed successfully'
+
+        }
+
+        failure {
+
+            echo 'Pipeline failed. Check logs.'
+
         }
     }
 }
