@@ -1,0 +1,36 @@
+{
+  "name": "ecommerce-app",
+
+  "compatibility_date": "2026-05-25",
+
+  "pages_build_output_dir": "build",
+
+  "observability": {
+
+    "enabled": false,
+
+    "head_sampling_rate": 1,
+
+    "logs": {
+
+      "enabled": true,
+
+      "head_sampling_rate": 1,
+
+      "persist": true,
+
+      "invocation_logs": true
+
+    },
+
+    "traces": {
+
+      "enabled": false,
+
+      "persist": true,
+
+      "head_sampling_rate": 1
+
+    }
+  }
+}
