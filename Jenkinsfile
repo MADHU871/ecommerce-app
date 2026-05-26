@@ -122,6 +122,14 @@ pipeline {
 
                 docker rm $CONTAINER_NAME || true
 
+                docker stop ecommerce-compose || true
+
+                docker rm ecommerce-compose || true
+
+                docker stop nginx-proxy || true
+
+                docker rm nginx-proxy || true
+
                 docker container prune -f || true
                 '''
 
@@ -162,9 +170,11 @@ pipeline {
 
                 docker rm nginx-proxy || true
 
+                docker container prune -f || true
+
                 docker run -d \
                 --name nginx-proxy \
-                -p 80:80 \
+                -p 8081:80 \
                 -v $(pwd)/nginx.conf:/etc/nginx/conf.d/default.conf \
                 nginx
                 '''
@@ -177,7 +187,7 @@ pipeline {
             steps {
 
                 sh '''
-                docker logs $CONTAINER_NAME
+                docker logs $CONTAINER_NAME || true
                 '''
 
             }
@@ -238,7 +248,7 @@ pipeline {
             steps {
 
                 sh '''
-                kubectl apply -f monitoring/k8s/
+                kubectl apply -f monitoring/k8s/ || true
                 '''
 
             }
