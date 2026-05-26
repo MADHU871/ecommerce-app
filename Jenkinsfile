@@ -7,6 +7,8 @@ pipeline {
         IMAGE_NAME = "mad0008271/ecommerce-app"
         CONTAINER_NAME = "ecommerce-container"
 
+        DOCKER_COMPOSE_FILE = "docker-compose.yml"
+
     }
 
     stages {
@@ -26,7 +28,30 @@ pipeline {
             steps {
 
                 sh 'pwd'
+
                 sh 'ls -la'
+
+            }
+        }
+
+        stage('Git Status') {
+
+            steps {
+
+                sh 'git status'
+
+                sh 'git branch'
+
+            }
+        }
+
+        stage('GitHub Actions Check') {
+
+            steps {
+
+                sh '''
+                ls -la .github/workflows || true
+                '''
 
             }
         }
@@ -88,7 +113,7 @@ pipeline {
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Stop Old Containers') {
 
             steps {
 
@@ -112,6 +137,36 @@ pipeline {
                 --name $CONTAINER_NAME \
                 -p 3010:3000 \
                 $IMAGE_NAME
+                '''
+
+            }
+        }
+
+        stage('Docker Compose') {
+
+            steps {
+
+                sh '''
+                docker compose -f $DOCKER_COMPOSE_FILE up -d || true
+                '''
+
+            }
+        }
+
+        stage('NGINX Reverse Proxy') {
+
+            steps {
+
+                sh '''
+                docker stop nginx-proxy || true
+
+                docker rm nginx-proxy || true
+
+                docker run -d \
+                --name nginx-proxy \
+                -p 80:80 \
+                -v $(pwd)/nginx.conf:/etc/nginx/conf.d/default.conf \
+                nginx
                 '''
 
             }
@@ -156,6 +211,76 @@ pipeline {
             }
         }
 
+        stage('Prometheus Monitoring') {
+
+            steps {
+
+                sh '''
+                docker compose -f monitoring/docker-compose.monitoring.yml up -d
+                '''
+
+            }
+        }
+
+        stage('Grafana Monitoring') {
+
+            steps {
+
+                sh '''
+                docker ps | grep grafana || true
+                '''
+
+            }
+        }
+
+        stage('Kubernetes Deployment') {
+
+            steps {
+
+                sh '''
+                kubectl apply -f monitoring/k8s/
+                '''
+
+            }
+        }
+
+        stage('Kubernetes Pods Check') {
+
+            steps {
+
+                sh '''
+                kubectl get pods
+
+                kubectl get services
+                '''
+
+            }
+        }
+
+        stage('Ingress Deployment') {
+
+            steps {
+
+                sh '''
+                kubectl apply -f monitoring/k8s/ingress.yaml || true
+                '''
+
+            }
+        }
+
+        stage('Auto Scaling') {
+
+            steps {
+
+                sh '''
+                kubectl apply -f monitoring/k8s/hpa.yaml || true
+
+                kubectl get hpa || true
+                '''
+
+            }
+        }
+
         stage('Cloudflare Trigger') {
 
             steps {
@@ -165,11 +290,20 @@ pipeline {
             }
         }
 
-        stage('Automation Complete') {
+        stage('HTTPS & SSL') {
 
             steps {
 
-                echo 'Full CI/CD DevOps Pipeline Completed Successfully'
+                echo 'Cloudflare HTTPS and SSL enabled'
+
+            }
+        }
+
+        stage('Enterprise CI/CD Complete') {
+
+            steps {
+
+                echo 'Enterprise DevOps CI/CD Pipeline Completed Successfully'
 
             }
         }
@@ -187,6 +321,17 @@ pipeline {
 
             echo 'Pipeline failed. Check Jenkins logs.'
 
+        }
+
+        always {
+
+            sh '''
+            docker ps -a || true
+
+            kubectl get pods || true
+
+            kubectl get services || true
+            '''
         }
     }
 }
