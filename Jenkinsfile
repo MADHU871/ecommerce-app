@@ -7,9 +7,6 @@ pipeline {
         IMAGE_NAME = "mad0008271/ecommerce-app"
         CONTAINER_NAME = "ecommerce-container"
 
-        AZURE_WEBAPP_NAME = "mad-ecommerce-app-2026"
-        AZURE_RESOURCE_GROUP = "ecommerce-group2"
-
     }
 
     stages {
@@ -162,44 +159,6 @@ pipeline {
             steps {
 
                 echo 'Cloudflare deployment triggered automatically'
-
-            }
-        }
-
-        stage('Azure Login') {
-
-            steps {
-
-                sh '''
-                az login
-                '''
-
-            }
-        }
-
-        stage('Azure Deploy') {
-
-            steps {
-
-                sh '''
-                az webapp config container set \
-                --name $AZURE_WEBAPP_NAME \
-                --resource-group $AZURE_RESOURCE_GROUP \
-                --docker-custom-image-name $IMAGE_NAME
-                '''
-
-            }
-        }
-
-        stage('Azure Restart WebApp') {
-
-            steps {
-
-                sh '''
-                az webapp restart \
-                --name $AZURE_WEBAPP_NAME \
-                --resource-group $AZURE_RESOURCE_GROUP
-                '''
 
             }
         }
