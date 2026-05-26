@@ -96,6 +96,8 @@ pipeline {
                 docker stop $CONTAINER_NAME || true
 
                 docker rm $CONTAINER_NAME || true
+
+                docker container prune -f || true
                 '''
 
             }
@@ -108,7 +110,7 @@ pipeline {
                 sh '''
                 docker run -d \
                 --name $CONTAINER_NAME \
-                -p 3007:3000 \
+                -p 3010:3000 \
                 $IMAGE_NAME
                 '''
 
