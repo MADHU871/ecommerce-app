@@ -51,7 +51,7 @@ pipeline {
 
                 withCredentials([usernamePassword(
 
-                    credentialsId: 'dockerhub',
+                    credentialsId: 'dockerhub-creds',
 
                     usernameVariable: 'DOCKER_USER',
 
@@ -224,7 +224,7 @@ pipeline {
 
         failure {
 
-            echo 'Pipeline failed. Check logs.'
+            echo 'Pipeline failed. Check Jenkins logs.'
 
         }
     }
